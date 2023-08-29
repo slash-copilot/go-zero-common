@@ -21,3 +21,7 @@ type LogtoMachineConfig struct {
 	TokenEndpoint string
 	APIResource   string
 }
+
+type LogtoWebhookConfig struct {
+	WebhookSigningKey string
+}
