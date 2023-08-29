@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	LOGTO_SIGNATURE_HEADER   = "logto-signature-sha-256"
-	ErrSignatureMismatch     = errors.New("signature mismatch")
-	ErrorNoSignatureNotFound = errors.New("no signature found")
+	LOGTO_SIGNATURE_HEADER = "logto-signature-sha-256"
+	ErrSignatureMismatch   = errors.New("signature mismatch")
+	ErrNoSignatureNotFound = errors.New("no signature found")
 )
 
 type WebhookAuthMiddleware struct {
@@ -37,7 +37,7 @@ func (m *WebhookAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		logx.Infof("WebhookAuthMiddleware signature: %s", signature)
 
 		if signature == "" {
-			unauthorized(w, r, ErrorNoSignatureNotFound)
+			unauthorized(w, r, ErrNoSignatureNotFound)
 			return
 		}
 
@@ -62,7 +62,7 @@ func Verify(signingKey string, r *http.Request, expectedSignature string) bool {
 	bodyBytes, err := io.ReadAll(tee)
 
 	if err != nil {
-		logx.Errorf("Failed to read request body: %s", err.)
+		logx.Errorf("Failed to read request body: %s", err.Error())
 	}
 
 	defer r.Body.Close()
