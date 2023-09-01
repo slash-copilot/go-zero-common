@@ -24,4 +24,5 @@ type LogtoMachineConfig struct {
 
 type LogtoWebhookConfig struct {
 	WebhookSigningKey string
+	WebhookAppID      string
 }

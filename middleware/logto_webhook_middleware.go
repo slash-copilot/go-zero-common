@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -20,6 +21,16 @@ var (
 	ErrSignatureMismatch   = errors.New("signature mismatch")
 	ErrNoSignatureNotFound = errors.New("no signature found")
 )
+
+type logtoWebhookReq struct {
+	HookID      string                  `json:"hookId"`
+	Application *logtoApplicationEntity `json:"application"`
+}
+
+type logtoApplicationEntity struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
 
 type WebhookAuthMiddleware struct {
 	Config *config.LogtoWebhookConfig
@@ -43,16 +54,28 @@ func (m *WebhookAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 				Code: xhttp.BusinessCodeUnAuthorized,
 				Msg:  "no signature found",
 			})
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		isValid := Verify(m.Config.WebhookSigningKey, r, signature)
+		isValid := verify(m.Config.WebhookSigningKey, r, signature)
 
 		if !isValid {
 			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
 				Code: xhttp.BusinessCodeUnAuthorized,
 				Msg:  "signature mismatch",
 			})
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		// ensure app id
+		if m.Config.WebhookAppID != "" && !ensureAppId(r, m.Config.WebhookAppID) {
+			logx.Infof("WebhookAuthMiddleware ensureAppId failed, expected app id: %s", m.Config.WebhookAppID)
+			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+				Code: xhttp.BusinessMsgOk,
+			})
+			w.WriteHeader(http.StatusAccepted)
 			return
 		}
 
@@ -60,8 +83,8 @@ func (m *WebhookAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Verify checks the expected signature against the computed one using HMAC and SHA256
-func Verify(signingKey string, r *http.Request, expectedSignature string) bool {
+// verify checks the expected signature against the computed one using HMAC and SHA256
+func verify(signingKey string, r *http.Request, expectedSignature string) bool {
 	var buffer bytes.Buffer
 
 	// TeeReader returns a Reader that writes to buffer what it reads from r.Body.
@@ -83,4 +106,39 @@ func Verify(signingKey string, r *http.Request, expectedSignature string) bool {
 
 	computedSignature := hex.EncodeToString(mac.Sum(nil))
 	return computedSignature == expectedSignature
+}
+
+// ensureAppId checks the expected app id against the one in the request body
+func ensureAppId(r *http.Request, expectedAppID string) bool {
+	var buffer bytes.Buffer
+
+	// TeeReader returns a Reader that writes to buffer what it reads from r.Body.
+	tee := io.TeeReader(r.Body, &buffer)
+
+	bodyBytes, err := io.ReadAll(tee)
+
+	if err != nil {
+		logx.Errorf("Failed to read request body: %s", err.Error())
+	}
+	defer r.Body.Close()
+
+	// Replace the original body with our buffer
+	r.Body = io.NopCloser(&buffer)
+
+	// decode body
+	var req logtoWebhookReq
+
+	err = json.Unmarshal(bodyBytes, &req)
+
+	if err != nil {
+		logx.Errorf("Failed to unmarshal request body: %s", err.Error())
+		return false
+	}
+
+	if req.Application == nil {
+		logx.Errorf("Failed to get application from request body")
+		return false
+	}
+
+	return req.Application.ID == expectedAppID
 }

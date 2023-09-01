@@ -49,6 +49,7 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 				Code: xhttp.BusinessCodeUnAuthorized,
 				Msg:  "no authorization found",
 			})
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
@@ -61,6 +62,7 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 				Code: xhttp.BusinessCodeUnAuthorized,
 				Msg:  "no authorization found",
 			})
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
@@ -72,6 +74,7 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 				Code: xhttp.BusinessCodeUnAuthorized,
 				Msg:  "verify token failed",
 			})
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
