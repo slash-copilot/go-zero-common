@@ -10,6 +10,8 @@ import (
 	"github.com/logto-io/go/core"
 	"github.com/slash-copilot/go-zero-common/config"
 	"github.com/slash-copilot/go-zero-common/ctxdata"
+	xerrors "github.com/slash-copilot/go-zero-common/errors"
+	xhttp "github.com/slash-copilot/go-zero-common/http"
 	"github.com/slash-copilot/go-zero-common/utils"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gopkg.in/square/go-jose.v2"
@@ -43,7 +45,10 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 
 		if authorization == "" {
 			logx.Errorf("no authorization found")
-			unauthorized(w, r, errors.New("no authorization found"))
+			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+				Code: xhttp.BusinessCodeUnAuthorized,
+				Msg:  "no authorization found",
+			})
 			return
 		}
 
@@ -52,7 +57,10 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 
 		if err != nil {
 			logx.Errorf("prefix from bearer token string, no authorization found")
-			unauthorized(w, r, errors.New("no authorization found"))
+			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+				Code: xhttp.BusinessCodeUnAuthorized,
+				Msg:  "no authorization found",
+			})
 			return
 		}
 
@@ -60,7 +68,10 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 
 		if err != nil {
 			logx.Errorf("verify token failed: %s,  error: %v", token, err)
-			unauthorized(w, r, err)
+			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+				Code: xhttp.BusinessCodeUnAuthorized,
+				Msg:  "verify token failed",
+			})
 			return
 		}
 
@@ -70,10 +81,6 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
-}
-
-func unauthorized(w http.ResponseWriter, r *http.Request, err error) {
-	w.WriteHeader(http.StatusUnauthorized)
 }
 
 func (m *LogtoAuthMiddleware) CreateRemoteJwks() (*jose.JSONWebKeySet, error) {

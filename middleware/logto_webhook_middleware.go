@@ -10,6 +10,8 @@ import (
 	"net/http"
 
 	"github.com/slash-copilot/go-zero-common/config"
+	xerrors "github.com/slash-copilot/go-zero-common/errors"
+	xhttp "github.com/slash-copilot/go-zero-common/http"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -37,14 +39,20 @@ func (m *WebhookAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		logx.Infof("WebhookAuthMiddleware signature: %s", signature)
 
 		if signature == "" {
-			unauthorized(w, r, ErrNoSignatureNotFound)
+			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+				Code: xhttp.BusinessCodeUnAuthorized,
+				Msg:  "no signature found",
+			})
 			return
 		}
 
 		isValid := Verify(m.Config.WebhookSigningKey, r, signature)
 
 		if !isValid {
-			unauthorized(w, r, ErrSignatureMismatch)
+			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+				Code: xhttp.BusinessCodeUnAuthorized,
+				Msg:  "signature mismatch",
+			})
 			return
 		}
 

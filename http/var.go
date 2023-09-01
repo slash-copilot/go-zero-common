@@ -9,4 +9,7 @@ const (
 
 	// BusinessCodeInvalidParam represents the business code for invalid param.
 	BusinessCodeInvalidParam = "common.invalid_param"
+
+	// BusinessCodeUnAuthorized represents the business code for unauthorized.
+	BusinessCodeUnAuthorized = "common.unauthorized"
 )
