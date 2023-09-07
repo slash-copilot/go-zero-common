@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	xerrors "github.com/slash-copilot/go-zero-common/errors"
 	xhttp "github.com/slash-copilot/go-zero-common/http"
 	"github.com/slash-copilot/go-zero-common/utils"
+	"github.com/slash-copilot/go-zero-common/utils/response"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -42,39 +44,27 @@ func (m *LogtoAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extracts a bearer token from Authorization header
 		authorization := r.Header.Get("Authorization")
-
+		
 		if authorization == "" {
-			logx.Errorf("no authorization found")
-			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
-				Code: xhttp.BusinessCodeUnAuthorized,
-				Msg:  "no authorization found",
-			})
-			w.WriteHeader(http.StatusUnauthorized)
+			unauthorized(w, r, &xerrors.CodeMsg{Code: xhttp.BusinessCodeUnAuthorized, Msg:  "no authorization found"})
 			return
 		}
 
 		// strips 'Bearer ' prefix from bearer token string
 		token, err := utils.StripBearerPrefixFromTokenString(authorization)
 
-		if err != nil {
-			logx.Errorf("prefix from bearer token string, no authorization found")
-			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
-				Code: xhttp.BusinessCodeUnAuthorized,
-				Msg:  "no authorization found",
-			})
-			w.WriteHeader(http.StatusUnauthorized)
+		if err != nil {			
+			unauthorized(w, r, &xerrors.CodeMsg{Code: xhttp.BusinessCodeUnAuthorized, Msg:  "prefix from bearer token string, no authorization found"})			
 			return
 		}
 
 		claims, err := m.VerifyToken(token)
 
-		if err != nil {
-			logx.Errorf("verify token failed: %s,  error: %v", token, err)
-			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+		if err != nil {		
+			unauthorized(w, r,  &xerrors.CodeMsg{
 				Code: xhttp.BusinessCodeUnAuthorized,
-				Msg:  "verify token failed",
-			})
-			w.WriteHeader(http.StatusUnauthorized)
+				Msg: fmt.Sprintf("verify token failed: %s,  error: %v", token, err.Error()),
+			})			
 			return
 		}
 
@@ -177,4 +167,10 @@ func verifyIdToken(idToken, aud, issuer string, jwks *jose.JSONWebKeySet) (*core
 	// }
 
 	return &idTokenClaims, nil
+}
+
+func unauthorized(w http.ResponseWriter, r *http.Request, cmError *xerrors.CodeMsg) {
+	logx.Errorf("unauthorized: %s", cmError.Msg)
+	writer := response.NewHeaderOnceResponseWriter(w)
+	xhttp.JsonErrorResponse(writer, http.StatusUnauthorized, cmError)
 }

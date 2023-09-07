@@ -50,22 +50,20 @@ func (m *WebhookAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		logx.Infof("WebhookAuthMiddleware signature: %s", signature)
 
 		if signature == "" {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+			unauthorized(w, r, &xerrors.CodeMsg{
 				Code: xhttp.BusinessCodeUnAuthorized,
-				Msg:  "no signature found",
+				Msg:  "webhook no signature found",
 			})
-			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		isValid := verify(m.Config.WebhookSigningKey, r, signature)
 
 		if !isValid {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, &xerrors.CodeMsg{
+			unauthorized(w, r, &xerrors.CodeMsg{
 				Code: xhttp.BusinessCodeUnAuthorized,
-				Msg:  "signature mismatch",
+				Msg:  "webhook signature mismatch",
 			})
-			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 

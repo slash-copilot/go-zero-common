@@ -31,6 +31,16 @@ func JsonBaseResponseCtx(ctx context.Context, w http.ResponseWriter, v any) {
 	httpx.OkJsonCtx(ctx, w, wrapBaseResponse(v))
 }
 
+// JsonErrorResponse writes err into w.
+func JsonErrorResponse(w http.ResponseWriter, code int, v any) {
+	httpx.WriteJson(w, code, wrapBaseResponse(v))
+}
+
+// JsonErrorResponseCtx writes err into w.
+func JsonErrorResponseCtx(ctx context.Context, w http.ResponseWriter, code int, v any) {
+	httpx.WriteJsonCtx(ctx, w, code, wrapBaseResponse(v))
+}
+	
 func wrapBaseResponse(v any) BaseResponse[any] {
 	var resp BaseResponse[any]
 	switch data := v.(type) {
