@@ -1,28 +1,28 @@
 package config
 
 type LogtoAppConfig struct {
-	AppID    string
-	AppName  string
-	Issuer   string
-	Audience string
-	Endpoint string
-	JwksUri  string
+	AppID    string `json:",optional"`
+	AppName  string `json:",optional"`
+	Issuer   string `json:",optional"`
+	Audience string `json:",optional"`
+	Endpoint string `json:",optional"`
+	JwksUri  string `json:",optional"`
 }
 
 type LogtoMachineConfig struct {
-	AppID    string
-	AppName  string
-	Issuer   string
-	Audience string
-	Endpoint string
-	JwksUri  string
-
-	AppSecret     string
-	TokenEndpoint string
-	APIResource   string
+	AppID    string `json:",optional"`
+	AppName  string `json:",optional"`
+	Issuer   string `json:",optional"`
+	Audience string `json:",optional"`
+	Endpoint string `json:",optional"`
+	JwksUri  string `json:",optional"`
+	
+	AppSecret     string `json:",optional"`
+	TokenEndpoint string `json:",optional"`
+	APIResource   string `json:",optional"`
 }
 
 type LogtoWebhookConfig struct {
-	WebhookSigningKey string
-	WebhookAppID      string
+	WebhookSigningKey string `json:",optional"`
+	WebhookID      string `json:",optional"`
 }
