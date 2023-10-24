@@ -6,7 +6,7 @@ require (
 	github.com/logto-io/go v1.0.3
 	github.com/zeromicro/go-zero v1.5.5
 	golang.org/x/crypto v0.12.0 // indirect
-	google.golang.org/grpc v1.57.0
+	google.golang.org/grpc v1.59.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
 
