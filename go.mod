@@ -3,7 +3,7 @@ module github.com/slash-copilot/go-zero-common
 go 1.20
 
 require (
-	github.com/logto-io/go/core v0.1.0
+	github.com/logto-io/go v1.0.3
 	github.com/zeromicro/go-zero v1.5.5
 	golang.org/x/crypto v0.12.0 // indirect
 	google.golang.org/grpc v1.57.0
@@ -26,3 +26,5 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
+
+replace github.com/logto-io/go v1.0.3 => github.com/slash-copilot/logto-go v0.0.2
